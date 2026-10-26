@@ -3,6 +3,7 @@ from test.support import (
     is_android, is_apple_mobile, is_wasm32, reap_children, verbose, warnings_helper
 )
 from test.support.import_helper import import_module
+from test.support import os_helper, script_helper
 
 # Skip these tests if termios is not available
 import_module('termios')
@@ -295,6 +296,29 @@ class PtyTest(unittest.TestCase):
             data = b""
 
         self.assertEqual(data, b"")
+
+    def test_spawn_exec_failure(self):
+        code = '''
+import os
+import pty
+import sys
+
+try:
+    status = pty.spawn([sys.argv[1]], stdin_read=lambda fd: b'')
+except BaseException:
+    # A failed exec must not return to the caller in the child process.
+    os._exit(42)
+assert os.waitstatus_to_exitcode(status) == 127, status
+'''
+        with os_helper.temp_dir() as tmpdir:
+            missing = os.path.join(tmpdir, 'missing')
+            not_executable = os.path.join(tmpdir, 'not_executable')
+            with open(not_executable, 'w', encoding='utf-8') as f:
+                f.write('not an executable\n')
+            os.chmod(not_executable, 0o600)
+            for path in (missing, not_executable):
+                with self.subTest(path=path):
+                    script_helper.assert_python_ok('-c', code, path)
 
     @warnings_helper.ignore_fork_in_thread_deprecation_warnings()
     def test_spawn_doesnt_hang(self):

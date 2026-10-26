@@ -163,7 +163,11 @@ def spawn(argv, master_read=_read, stdin_read=_read):
 
     pid, master_fd = fork()
     if pid == CHILD:
-        os.execlp(argv[0], *argv)
+        try:
+            os.execlp(argv[0], *argv)
+        except BaseException:
+            # Do not resume the caller's code in the child if exec fails.
+            os._exit(127)
 
     try:
         mode = tcgetattr(STDIN_FILENO)

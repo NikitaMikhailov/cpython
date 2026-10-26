@@ -1,0 +1,3 @@
+Fix :func:`pty.spawn` allowing the child process to resume the caller's code
+when executing the requested program fails. The child now exits with code
+127, as in :func:`os.spawnv`.

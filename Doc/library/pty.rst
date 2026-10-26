@@ -86,6 +86,10 @@ The :mod:`!pty` module defines the following functions:
       :func:`spawn` now returns the status value from :func:`os.waitpid`
       on the child process.
 
+   .. versionchanged:: 3.16
+      If the child process cannot execute the requested program, it exits with
+      exit code 127 instead of propagating an exception in the child process.
+
 Example
 -------
 
